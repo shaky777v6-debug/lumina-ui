@@ -3,6 +3,23 @@ local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
 
+local COLORS = {
+	background = Color3.fromRGB(15, 10, 25),
+	surface = Color3.fromRGB(25, 18, 40),
+	surface_light = Color3.fromRGB(35, 25, 55),
+
+	primary = Color3.fromRGB(155, 89, 255),
+	accent = Color3.fromRGB(190, 120, 255),
+
+	text_primary = Color3.fromRGB(245, 240, 255),
+	text_secondary = Color3.fromRGB(170, 155, 200),
+
+	border = Color3.fromRGB(70, 45, 100),
+
+	success = Color3.fromRGB(120, 255, 170),
+	danger = Color3.fromRGB(255, 90, 120)
+}
+
 local Lumina = {}
 Lumina.__index = Lumina
 
@@ -29,7 +46,7 @@ function Lumina.new(title)
 	mainFrame.Name = "MainFrame"
 	mainFrame.Size = UDim2.new(0, 520, 0, 360)
 	mainFrame.Position = UDim2.new(0.5, -260, 0.5, -180)
-	mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+	mainFrame.BackgroundColor3 = COLORS.background
 	mainFrame.BorderSizePixel = 0
 	mainFrame.Active = true
 	mainFrame.Parent = screenGui
@@ -41,7 +58,7 @@ function Lumina.new(title)
 	local topBar = Instance.new("Frame")
 	topBar.Name = "TopBar"
 	topBar.Size = UDim2.new(1, 0, 0, 40)
-	topBar.BackgroundColor3 = Color3.fromRGB(28, 28, 35)
+	topBar.BackgroundColor3 = COLORS.surface
 	topBar.BorderSizePixel = 0
 	topBar.Parent = mainFrame
 	
@@ -55,7 +72,7 @@ function Lumina.new(title)
 	titleLabel.Position = UDim2.new(0, 15, 0, 0)
 	titleLabel.BackgroundTransparency = 1
 	titleLabel.Text = title .. " | by @lookables"
-	titleLabel.TextColor3 = Color3.fromRGB(240, 240, 245)
+	titleLabel.TextColor3 = COLORS.text_primary
 	titleLabel.TextSize = 16
 	titleLabel.Font = Enum.Font.GothamBold
 	titleLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -67,7 +84,7 @@ function Lumina.new(title)
 	minimizeButton.Position = UDim2.new(1, -40, 0, 5)
 	minimizeButton.BackgroundTransparency = 1
 	minimizeButton.Text = "-"
-	minimizeButton.TextColor3 = Color3.fromRGB(180, 180, 190)
+	minimizeButton.TextColor3 = COLORS.text_secondary
 	minimizeButton.TextSize = 20
 	minimizeButton.Font = Enum.Font.GothamBold
 	minimizeButton.Parent = topBar
@@ -82,7 +99,7 @@ function Lumina.new(title)
 	local sidebar = Instance.new("Frame")
 	sidebar.Name = "Sidebar"
 	sidebar.Size = UDim2.new(0, 140, 1, 0)
-	sidebar.BackgroundColor3 = Color3.fromRGB(24, 24, 30)
+	sidebar.BackgroundColor3 = COLORS.surface
 	sidebar.BorderSizePixel = 0
 	sidebar.Parent = container
 	
@@ -103,6 +120,17 @@ function Lumina.new(title)
 	tabPadding.PaddingLeft = UDim.new(0, 10)
 	tabPadding.PaddingRight = UDim.new(0, 10)
 	tabPadding.Parent = sidebar
+
+	local creditsLabel = Instance.new("TextLabel")
+	creditsLabel.Name = "CreditsLabel"
+	creditsLabel.Size = UDim2.new(1, 0, 0, 20)
+	creditsLabel.BackgroundTransparency = 1
+	creditsLabel.Text = "by @lookables"
+	creditsLabel.TextColor3 = COLORS.text_secondary
+	creditsLabel.TextSize = 12
+	creditsLabel.Font = Enum.Font.GothamMedium
+	creditsLabel.LayoutOrder = 9999
+	creditsLabel.Parent = sidebar
 	
 	local dragging, dragInput, dragStart, startPos
 	
@@ -137,7 +165,7 @@ function Lumina.new(title)
 	table.insert(self.connections, globalDrag)
 	
 	local minimized = false
-	minimizeButton.MouseButton1Click:Connect(function()
+	local minimizeConnection = minimizeButton.MouseButton1Click:Connect(function()
 		minimized = not minimized
 		if minimized then
 			container.Visible = false
@@ -149,6 +177,7 @@ function Lumina.new(title)
 			minimizeButton.Text = "-"
 		end
 	end)
+	table.insert(self.connections, minimizeConnection)
 	
 	self.MainFrame = mainFrame
 	self.TabContainer = tabContainer
@@ -162,10 +191,10 @@ function Lumina:AddTab(name, active)
 	local tabButton = Instance.new("TextButton")
 	tabButton.Name = name .. "Tab"
 	tabButton.Size = UDim2.new(1, 0, 0, 32)
-	tabButton.BackgroundColor3 = active and Color3.fromRGB(35, 35, 45) or Color3.fromRGB(24, 24, 30)
+	tabButton.BackgroundColor3 = active and COLORS.surface_light or COLORS.surface
 	tabButton.BorderSizePixel = 0
 	tabButton.Text = name
-	tabButton.TextColor3 = active and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(150, 150, 160)
+	tabButton.TextColor3 = active and COLORS.text_primary or COLORS.text_secondary
 	tabButton.TextSize = 14
 	tabButton.Font = Enum.Font.GothamMedium
 	tabButton.Parent = self.Sidebar
@@ -180,7 +209,16 @@ function Lumina:AddTab(name, active)
 	scrollingFrame.BackgroundTransparency = 1
 	scrollingFrame.BorderSizePixel = 0
 	scrollingFrame.ScrollBarThickness = 4
-	scrollingFrame.ScrollBarImageColor3 = Color3.fromRGB(50, 50, 60)
+	scrollingFrame.ScrollBarImageColor3 = COLORS.surface_light
+	
+	if active then
+		for _, child in ipairs(self.TabContainer:GetChildren()) do
+			if child:IsA("ScrollingFrame") then
+				child.Visible = false
+			end
+		end
+	end
+	
 	scrollingFrame.Visible = active
 	scrollingFrame.Parent = self.TabContainer
 	
@@ -200,11 +238,11 @@ function Lumina:AddTab(name, active)
 	end)
 	table.insert(self.connections, layoutChanged)
 	
-	tabButton.MouseButton1Click:Connect(function()
+	local tabConnection = tabButton.MouseButton1Click:Connect(function()
 		for _, child in ipairs(self.Sidebar:GetChildren()) do
 			if child:IsA("TextButton") then
-				child.BackgroundColor3 = Color3.fromRGB(24, 24, 30)
-				child.TextColor3 = Color3.fromRGB(150, 150, 160)
+				child.BackgroundColor3 = COLORS.surface
+				child.TextColor3 = COLORS.text_secondary
 			end
 		end
 		for _, child in ipairs(self.TabContainer:GetChildren()) do
@@ -212,10 +250,11 @@ function Lumina:AddTab(name, active)
 				child.Visible = false
 			end
 		end
-		tabButton.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
-		tabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+		tabButton.BackgroundColor3 = COLORS.surface_light
+		tabButton.TextColor3 = COLORS.text_primary
 		scrollingFrame.Visible = true
 	end)
+	table.insert(self.connections, tabConnection)
 	
 	return scrollingFrame
 end
@@ -227,7 +266,7 @@ function Lumina:AddSlider(parent, text, minVal, maxVal, key, callback)
 	local sliderFrame = Instance.new("Frame")
 	sliderFrame.Name = text .. "Slider"
 	sliderFrame.Size = UDim2.new(1, 0, 0, 50)
-	sliderFrame.BackgroundColor3 = Color3.fromRGB(28, 28, 35)
+	sliderFrame.BackgroundColor3 = COLORS.surface
 	sliderFrame.BorderSizePixel = 0
 	sliderFrame.Active = true
 	sliderFrame.Parent = parent
@@ -241,7 +280,7 @@ function Lumina:AddSlider(parent, text, minVal, maxVal, key, callback)
 	label.Position = UDim2.new(0, 12, 0, 6)
 	label.BackgroundTransparency = 1
 	label.Text = text
-	label.TextColor3 = Color3.fromRGB(230, 230, 235)
+	label.TextColor3 = COLORS.text_primary
 	label.TextSize = 14
 	label.Font = Enum.Font.GothamMedium
 	label.TextXAlignment = Enum.TextXAlignment.Left
@@ -252,7 +291,7 @@ function Lumina:AddSlider(parent, text, minVal, maxVal, key, callback)
 	valueLabel.Position = UDim2.new(0.7, -12, 0, 6)
 	valueLabel.BackgroundTransparency = 1
 	valueLabel.Text = tostring(initialValue)
-	valueLabel.TextColor3 = Color3.fromRGB(160, 160, 170)
+	valueLabel.TextColor3 = COLORS.text_secondary
 	valueLabel.TextSize = 14
 	valueLabel.Font = Enum.Font.GothamMedium
 	valueLabel.TextXAlignment = Enum.TextXAlignment.Right
@@ -262,7 +301,7 @@ function Lumina:AddSlider(parent, text, minVal, maxVal, key, callback)
 	sliderBar.Name = "SliderBar"
 	sliderBar.Size = UDim2.new(1, -24, 0, 14)
 	sliderBar.Position = UDim2.new(0, 12, 0, 30)
-	sliderBar.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
+	sliderBar.BackgroundColor3 = COLORS.surface_light
 	sliderBar.BorderSizePixel = 0
 	sliderBar.Active = true
 	sliderBar.ZIndex = 1
@@ -275,7 +314,7 @@ function Lumina:AddSlider(parent, text, minVal, maxVal, key, callback)
 	local fill = Instance.new("Frame")
 	fill.Name = "Fill"
 	fill.Size = UDim2.new(0, 0, 1, 0)
-	fill.BackgroundColor3 = Color3.fromRGB(115, 90, 230)
+	fill.BackgroundColor3 = Color3.fromRGB(180, 80, 255)
 	fill.BorderSizePixel = 0
 	fill.ZIndex = 1
 	fill.Parent = sliderBar
@@ -288,7 +327,7 @@ function Lumina:AddSlider(parent, text, minVal, maxVal, key, callback)
 	knob.Name = "Knob"
 	knob.Size = UDim2.new(0, 12, 0, 12)
 	knob.Position = UDim2.new(0, 0, 0.5, -6)
-	knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	knob.BackgroundColor3 = Color3.fromRGB(220, 150, 255)
 	knob.BorderSizePixel = 0
 	knob.Text = ""
 	knob.AutoButtonColor = false
@@ -340,14 +379,16 @@ function Lumina:AddSlider(parent, text, minVal, maxVal, key, callback)
 	
 	local knobBegan = knob.MouseButton1Down:Connect(function()
 		isDragging = true
+		local mouse = UserInputService:GetMouseLocation() - game:GetService("GuiService"):GetGuiInset()
+		updateSlider({
+			Position = Vector3.new(mouse.X, mouse.Y, 0)
+		})
 	end)
 	table.insert(self.connections, knobBegan)
 	
 	local globalMove = UserInputService.InputChanged:Connect(function(input)
-		if isDragging then
-			if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-				updateSlider(input)
-			end
+		if isDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+			updateSlider(input)
 		end
 	end)
 	table.insert(self.connections, globalMove)
@@ -367,7 +408,7 @@ function Lumina:AddToggle(parent, text, key, callback)
 	local toggleFrame = Instance.new("Frame")
 	toggleFrame.Name = text .. "Toggle"
 	toggleFrame.Size = UDim2.new(1, 0, 0, 40)
-	toggleFrame.BackgroundColor3 = Color3.fromRGB(28, 28, 35)
+	toggleFrame.BackgroundColor3 = COLORS.surface
 	toggleFrame.BorderSizePixel = 0
 	toggleFrame.Parent = parent
 	
@@ -380,7 +421,7 @@ function Lumina:AddToggle(parent, text, key, callback)
 	label.Position = UDim2.new(0, 12, 0, 0)
 	label.BackgroundTransparency = 1
 	label.Text = text
-	label.TextColor3 = Color3.fromRGB(230, 230, 235)
+	label.TextColor3 = COLORS.text_primary
 	label.TextSize = 14
 	label.Font = Enum.Font.GothamMedium
 	label.TextXAlignment = Enum.TextXAlignment.Left
@@ -389,7 +430,7 @@ function Lumina:AddToggle(parent, text, key, callback)
 	local button = Instance.new("TextButton")
 	button.Size = UDim2.new(0, 34, 0, 20)
 	button.Position = UDim2.new(1, -46, 0.5, -10)
-	button.BackgroundColor3 = state and Color3.fromRGB(115, 90, 230) or Color3.fromRGB(45, 45, 55)
+	button.BackgroundColor3 = state and COLORS.primary or COLORS.surface_light
 	button.BorderSizePixel = 0
 	button.Text = ""
 	button.Parent = toggleFrame
@@ -401,7 +442,7 @@ function Lumina:AddToggle(parent, text, key, callback)
 	local indicator = Instance.new("Frame")
 	indicator.Size = UDim2.new(0, 14, 0, 14)
 	indicator.Position = state and UDim2.new(1, -17, 0.5, -7) or UDim2.new(0, 3, 0.5, -7)
-	indicator.BackgroundColor3 = state and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(150, 150, 160)
+	indicator.BackgroundColor3 = state and COLORS.text_primary or COLORS.text_secondary
 	indicator.BorderSizePixel = 0
 	indicator.Parent = button
 	
@@ -409,13 +450,13 @@ function Lumina:AddToggle(parent, text, key, callback)
 	indCorner.CornerRadius = UDim.new(1, 0)
 	indCorner.Parent = indicator
 	
-	button.MouseButton1Click:Connect(function()
+	local toggleConnection = button.MouseButton1Click:Connect(function()
 		state = not state
 		self.config[key] = state
 		
 		local targetPos = state and UDim2.new(1, -17, 0.5, -7) or UDim2.new(0, 3, 0.5, -7)
-		local targetColor = state and Color3.fromRGB(115, 90, 230) or Color3.fromRGB(45, 45, 55)
-		local indColor = state and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(150, 150, 160)
+		local targetColor = state and COLORS.primary or COLORS.surface_light
+		local indColor = state and COLORS.text_primary or COLORS.text_secondary
 		
 		TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = targetColor}):Play()
 		TweenService:Create(indicator, TweenInfo.new(0.2), {Position = targetPos, BackgroundColor3 = indColor}):Play()
@@ -426,13 +467,16 @@ function Lumina:AddToggle(parent, text, key, callback)
 			end
 		end)
 	end)
+	table.insert(self.connections, toggleConnection)
 end
 
 function Lumina:AddDropdown(parent, text, list, key, callback)
+	self.config[key] = self.config[key] or list[1]
+	
 	local dropdownFrame = Instance.new("Frame")
 	dropdownFrame.Name = text .. "Dropdown"
 	dropdownFrame.Size = UDim2.new(1, 0, 0, 40)
-	dropdownFrame.BackgroundColor3 = Color3.fromRGB(28, 28, 35)
+	dropdownFrame.BackgroundColor3 = COLORS.surface
 	dropdownFrame.BorderSizePixel = 0
 	dropdownFrame.ClipsDescendants = true
 	dropdownFrame.Parent = parent
@@ -452,7 +496,7 @@ function Lumina:AddDropdown(parent, text, list, key, callback)
 	label.Position = UDim2.new(0, 12, 0, 0)
 	label.BackgroundTransparency = 1
 	label.Text = text
-	label.TextColor3 = Color3.fromRGB(230, 230, 235)
+	label.TextColor3 = COLORS.text_primary
 	label.TextSize = 14
 	label.Font = Enum.Font.GothamMedium
 	label.TextXAlignment = Enum.TextXAlignment.Left
@@ -462,8 +506,8 @@ function Lumina:AddDropdown(parent, text, list, key, callback)
 	currentLabel.Size = UDim2.new(0.3, 0, 1, 0)
 	currentLabel.Position = UDim2.new(0.7, -12, 0, 0)
 	currentLabel.BackgroundTransparency = 1
-	currentLabel.Text = tostring(self.config[key] or "None")
-	currentLabel.TextColor3 = Color3.fromRGB(140, 140, 150)
+	currentLabel.Text = tostring(self.config[key])
+	currentLabel.TextColor3 = COLORS.text_secondary
 	currentLabel.TextSize = 14
 	currentLabel.Font = Enum.Font.GothamMedium
 	currentLabel.TextXAlignment = Enum.TextXAlignment.Right
@@ -498,18 +542,19 @@ function Lumina:AddDropdown(parent, text, list, key, callback)
 		end
 	end
 	
-	button.MouseButton1Click:Connect(function()
+	local dropdownConnection = button.MouseButton1Click:Connect(function()
 		open = not open
 		refreshLayout()
 	end)
+	table.insert(self.connections, dropdownConnection)
 	
 	for i, val in ipairs(list) do
 		local itemButton = Instance.new("TextButton")
 		itemButton.Size = UDim2.new(1, 0, 0, 30)
-		itemButton.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+		itemButton.BackgroundColor3 = COLORS.surface_light
 		itemButton.BorderSizePixel = 0
 		itemButton.Text = tostring(val)
-		itemButton.TextColor3 = Color3.fromRGB(200, 200, 205)
+		itemButton.TextColor3 = COLORS.text_secondary
 		itemButton.TextSize = 13
 		itemButton.Font = Enum.Font.GothamMedium
 		itemButton.Parent = itemsFrame
@@ -518,15 +563,18 @@ function Lumina:AddDropdown(parent, text, list, key, callback)
 		itemCorner.CornerRadius = UDim.new(0, 4)
 		itemCorner.Parent = itemButton
 		
-		itemButton.MouseButton1Click:Connect(function()
+		local itemConnection = itemButton.MouseButton1Click:Connect(function()
 			currentLabel.Text = tostring(val)
 			self.config[key] = val
 			open = false
 			refreshLayout()
 			pcall(function()
-				callback(val)
+				if callback then
+					callback(val)
+				end
 			end)
 		end)
+		table.insert(self.connections, itemConnection)
 	end
 end
 
@@ -534,7 +582,7 @@ function Lumina:Notify(title, message)
 	local notifyFrame = Instance.new("Frame")
 	notifyFrame.Size = UDim2.new(0, 260, 0, 70)
 	notifyFrame.Position = UDim2.new(1, 300, 1, -85)
-	notifyFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 38)
+	notifyFrame.BackgroundColor3 = COLORS.surface
 	notifyFrame.BorderSizePixel = 0
 	notifyFrame.Parent = self.ScreenGui
 	
@@ -547,7 +595,7 @@ function Lumina:Notify(title, message)
 	nTitle.Position = UDim2.new(0, 12, 0, 4)
 	nTitle.BackgroundTransparency = 1
 	nTitle.Text = title
-	nTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+	nTitle.TextColor3 = COLORS.text_primary
 	nTitle.TextSize = 14
 	nTitle.Font = Enum.Font.GothamBold
 	nTitle.TextXAlignment = Enum.TextXAlignment.Left
@@ -558,7 +606,7 @@ function Lumina:Notify(title, message)
 	nDesc.Position = UDim2.new(0, 12, 0, 25)
 	nDesc.BackgroundTransparency = 1
 	nDesc.Text = message
-	nDesc.TextColor3 = Color3.fromRGB(180, 180, 190)
+	nDesc.TextColor3 = COLORS.text_secondary
 	nDesc.TextSize = 12
 	nDesc.Font = Enum.Font.GothamMedium
 	nDesc.TextXAlignment = Enum.TextXAlignment.Left
@@ -571,10 +619,13 @@ function Lumina:Notify(title, message)
 	task.delay(4, function()
 		if notifyFrame and notifyFrame.Parent then
 			local closeTween = TweenService:Create(notifyFrame, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Position = UDim2.new(1, 300, 1, -85)})
-			closeTween:Play()
-			closeTween.Completed:Connect(function()
+			
+			local closeConnection = closeTween.Completed:Connect(function()
 				notifyFrame:Destroy()
 			end)
+			table.insert(self.connections, closeConnection)
+			
+			closeTween:Play()
 		end
 	end)
 end
