@@ -313,24 +313,24 @@ end
 
 function Lumina:AddSlider(parent, text, minVal, maxVal, key, callback)
 	self.config[key] = self.config[key] or minVal
-	
+
 	local frame = Instance.new("Frame")
 	frame.Size = UDim2.new(1, -30, 0, 70)
 	frame.BackgroundColor3 = COLORS.surface
 	frame.BorderSizePixel = 0
 	frame.Parent = parent
-	
+
 	local frameCorner = Instance.new("UICorner")
 	frameCorner.CornerRadius = UDim.new(0, 4)
 	frameCorner.Parent = frame
-	
+
 	local frameStroke = Instance.new("UIStroke")
 	frameStroke.Color = COLORS.border
 	frameStroke.Thickness = 1
 	frameStroke.Parent = frame
-	
+
 	local label = Instance.new("TextLabel")
-	label.Size = UDim2.new(1, -24, 0, 20)
+	label.Size = UDim2.new(0.7, 0, 0, 20)
 	label.Position = UDim2.new(0, 12, 0, 8)
 	label.BackgroundTransparency = 1
 	label.Text = text
@@ -339,10 +339,10 @@ function Lumina:AddSlider(parent, text, minVal, maxVal, key, callback)
 	label.TextColor3 = COLORS.text_primary
 	label.TextXAlignment = Enum.TextXAlignment.Left
 	label.Parent = frame
-	
+
 	local valueLabel = Instance.new("TextLabel")
-	valueLabel.Size = UDim2.new(0.3, 0, 0, 20)
-	valueLabel.Position = UDim2.new(1, -50, 0, 8)
+	valueLabel.Size = UDim2.new(0.25, 0, 0, 20)
+	valueLabel.Position = UDim2.new(0.75, -12, 0, 8)
 	valueLabel.BackgroundTransparency = 1
 	valueLabel.Text = tostring(self.config[key])
 	valueLabel.Font = Enum.Font.GothamMonospace
@@ -350,77 +350,94 @@ function Lumina:AddSlider(parent, text, minVal, maxVal, key, callback)
 	valueLabel.TextColor3 = COLORS.primary
 	valueLabel.TextXAlignment = Enum.TextXAlignment.Right
 	valueLabel.Parent = frame
-	
+
 	local sliderBar = Instance.new("Frame")
 	sliderBar.Size = UDim2.new(1, -24, 0, 6)
-	sliderBar.Position = UDim2.new(0, 12, 0, 36)
+	sliderBar.Position = UDim2.new(0, 12, 0, 38)
 	sliderBar.BackgroundColor3 = COLORS.border
 	sliderBar.BorderSizePixel = 0
+	sliderBar.Active = true
 	sliderBar.Parent = frame
-	
+
 	local barCorner = Instance.new("UICorner")
 	barCorner.CornerRadius = UDim.new(1, 0)
 	barCorner.Parent = sliderBar
-	
+
+	local pct = math.clamp((self.config[key] - minVal) / (maxVal - minVal), 0, 1)
+
 	local fill = Instance.new("Frame")
-	local initPct = (self.config[key] - minVal) / (maxVal - minVal)
-	fill.Size = UDim2.new(initPct, 0, 1, 0)
+	fill.Size = UDim2.new(pct, 0, 1, 0)
 	fill.BackgroundColor3 = COLORS.primary
 	fill.BorderSizePixel = 0
 	fill.Parent = sliderBar
-	
+
 	local fillCorner = Instance.new("UICorner")
 	fillCorner.CornerRadius = UDim.new(1, 0)
 	fillCorner.Parent = fill
-	
-	local button = Instance.new("TextButton")
-	button.Size = UDim2.new(0, 14, 0, 14)
-	button.AnchorPoint = Vector2.new(0.5, 0.5)
-	button.Position = UDim2.new(initPct, 0, 0.5, 0)
-	button.BackgroundColor3 = COLORS.accent
-	button.BorderSizePixel = 0
-	button.Text = ""
-	button.Parent = sliderBar
-	
-	local btnCorner = Instance.new("UICorner")
-	btnCorner.CornerRadius = UDim.new(1, 0)
-	btnCorner.Parent = button
-	
-	local active = false
-	
-	local function updateValue(input)
-		local rawX = input.Position.X - sliderBar.AbsolutePosition.X
-		local pct = math.clamp(rawX / sliderBar.AbsoluteSize.X, 0, 1)
-		local exactVal = minVal + (pct * (maxVal - minVal))
-		local val = math.round(exactVal)
-		
-		self.config[key] = val
-		valueLabel.Text = tostring(val)
-		button.Position = UDim2.new(pct, 0, 0.5, 0)
-		fill.Size = UDim2.new(pct, 0, 1, 0)
-		
-		if callback then callback(val) end
+
+	local knob = Instance.new("TextButton")
+	knob.Size = UDim2.new(0, 14, 0, 14)
+	knob.AnchorPoint = Vector2.new(0.5, 0.5)
+	knob.Position = UDim2.new(pct, 0, 0.5, 0)
+	knob.BackgroundColor3 = COLORS.accent
+	knob.BorderSizePixel = 0
+	knob.Text = ""
+	knob.Active = true
+	knob.Parent = sliderBar
+
+	local knobCorner = Instance.new("UICorner")
+	knobCorner.CornerRadius = UDim.new(1, 0)
+	knobCorner.Parent = knob
+
+	local dragging = false
+
+	local function update(input)
+		local width = sliderBar.AbsoluteSize.X
+		if width <= 0 then
+			return
+		end
+
+		local mouseX = input.Position.X - sliderBar.AbsolutePosition.X
+		local percent = math.clamp(mouseX / width, 0, 1)
+
+		local value = math.floor(minVal + ((maxVal - minVal) * percent) + 0.5)
+
+		self.config[key] = value
+
+		fill.Size = UDim2.new(percent, 0, 1, 0)
+		knob.Position = UDim2.new(percent, 0, 0.5, 0)
+		valueLabel.Text = tostring(value)
+
+		if callback then
+			callback(value)
+		end
 	end
-	
-	button.InputBegan:Connect(function(input)
+
+	sliderBar.InputBegan:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-			active = true
+			dragging = true
+			update(input)
 		end
 	end)
-	
+
+	knob.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = true
+		end
+	end)
+
+	UserInputService.InputChanged:Connect(function(input)
+		if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+			update(input)
+		end
+	end)
+
 	UserInputService.InputEnded:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-			active = false
-		end
-	end)
-	
-	UserInputService.InputChanged:Connect(function(input)
-		if active and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-			updateValue(input)
+			dragging = false
 		end
 	end)
 end
-
 function Lumina:AddDropdown(parent, text, options, key, callback)
 	self.config[key] = self.config[key] or {}
 	
