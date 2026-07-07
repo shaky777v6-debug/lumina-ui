@@ -32,9 +32,6 @@ function Lumina.new(title)
 	self.tabs = {}
 	self.pages = {}
 	self.config = {}
-	self.dragging = false
-	self.dragStart = nil
-	self.startPos = nil
 	self.minimized = false
 	
 	if gethui then
@@ -61,8 +58,8 @@ function Lumina:_createGui()
 	
 	local main = Instance.new("Frame")
 	main.Name = "MainFrame"
-	main.Size = UDim2.new(0, 500, 0, 380)
-	main.Position = UDim2.new(0.5, -250, 0.5, -190)
+	main.Size = UDim2.new(0, 550, 0, 400)
+	main.Position = UDim2.new(0.5, -275, 0.5, -200)
 	main.BackgroundColor3 = COLORS.background
 	main.BorderSizePixel = 0
 	main.Active = true
@@ -130,7 +127,7 @@ function Lumina:_createHeader()
 	
 	minimizeBtn.MouseButton1Click:Connect(function()
 		self.minimized = not self.minimized
-		local targetSize = self.minimized and UDim2.new(0, 500, 0, 50) or UDim2.new(0, 500, 0, 380)
+		local targetSize = self.minimized and UDim2.new(0, 550, 0, 50) or UDim2.new(0, 550, 0, 400)
 		TweenService:Create(self.mainFrame, TWEENS.normal, {Size = targetSize}):Play()
 	end)
 	
@@ -175,7 +172,8 @@ function Lumina:_createLayout()
 	local content = Instance.new("Frame")
 	content.Position = UDim2.new(0, 141, 0, 50)
 	content.Size = UDim2.new(1, -141, 1, -50)
-	content.BackgroundTransparency = 1
+	content.BackgroundColor3 = COLORS.background
+	content.BorderSizePixel = 0
 	content.Parent = self.mainFrame
 	
 	self.navFrame = nav
@@ -202,7 +200,8 @@ function Lumina:AddTab(name, isDefault)
 	
 	local page = Instance.new("ScrollingFrame")
 	page.Size = UDim2.new(1, 0, 1, 0)
-	page.BackgroundTransparency = 1
+	page.BackgroundColor3 = COLORS.background
+	page.BackgroundTransparency = 0
 	page.BorderSizePixel = 0
 	page.Visible = isDefault
 	page.ScrollBarThickness = 3
@@ -211,25 +210,24 @@ function Lumina:AddTab(name, isDefault)
 	page.Parent = self.contentFrame
 	
 	local layout = Instance.new("UIListLayout")
-	layout.Padding = UDim.new(0, 10)
+	layout.Padding = UDim.new(0, 12)
 	layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 	layout.SortOrder = Enum.SortOrder.LayoutOrder
 	layout.Parent = page
 	
 	local padding = Instance.new("UIPadding")
-	padding.PaddingTop = UDim.new(0, 12)
-	padding.PaddingBottom = UDim.new(0, 12)
-	padding.PaddingLeft = UDim.new(0, 12)
-	padding.PaddingRight = UDim.new(0, 12)
+	padding.PaddingTop = UDim.new(0, 15)
+	padding.PaddingBottom = UDim.new(0, 15)
+	padding.PaddingLeft = UDim.new(0, 15)
+	padding.PaddingRight = UDim.new(0, 15)
 	padding.Parent = page
 	
 	layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-		page.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 24)
+		page.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 30)
 	end)
 	
 	btn.MouseButton1Click:Connect(function()
 		for _, p in pairs(self.pages) do
-			TweenService:Create(p, TWEENS.fast, {BackgroundTransparency = 1}):Play()
 			p.Visible = false
 		end
 		
@@ -238,7 +236,6 @@ function Lumina:AddTab(name, isDefault)
 		end
 		
 		page.Visible = true
-		TweenService:Create(page, TWEENS.fast, {BackgroundTransparency = 0}):Play()
 		TweenService:Create(btn, TWEENS.fast, {BackgroundColor3 = COLORS.surface, TextColor3 = COLORS.accent}):Play()
 	end)
 	
@@ -249,29 +246,8 @@ function Lumina:AddTab(name, isDefault)
 end
 
 function Lumina:AddToggle(parent, text, key, callback)
-	local toggle = Instance.new("TextButton")
-	toggle.Size = UDim2.new(0, 40, 0, 20)
-	toggle.Position = UDim2.new(1, -50, 0.5, -10)
-	toggle.BackgroundColor3 = self.config[key] and COLORS.primary or COLORS.border
-	toggle.Text = ""
-	toggle.Parent = parent
-	
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(1, 0)
-	corner.Parent = toggle
-	
-	local dot = Instance.new("Frame")
-	dot.Size = UDim2.new(0, 14, 0, 14)
-	dot.Position = self.config[key] and UDim2.new(1, -17, 0.5, -7) or UDim2.new(0, 3, 0.5, -7)
-	dot.BackgroundColor3 = COLORS.accent
-	dot.Parent = toggle
-	
-	local dotCorner = Instance.new("UICorner")
-	dotCorner.CornerRadius = UDim.new(1, 0)
-	dotCorner.Parent = dot
-	
 	local frame = Instance.new("Frame")
-	frame.Size = UDim2.new(1, -24, 0, 40)
+	frame.Size = UDim2.new(1, -30, 0, 42)
 	frame.BackgroundColor3 = COLORS.surface
 	frame.BorderSizePixel = 0
 	frame.Parent = parent
@@ -282,6 +258,7 @@ function Lumina:AddToggle(parent, text, key, callback)
 	
 	local frameStroke = Instance.new("UIStroke")
 	frameStroke.Color = COLORS.border
+	frameStroke.Thickness = 1
 	frameStroke.Parent = frame
 	
 	local label = Instance.new("TextLabel")
@@ -293,9 +270,29 @@ function Lumina:AddToggle(parent, text, key, callback)
 	label.TextSize = 13
 	label.TextColor3 = COLORS.text_primary
 	label.TextXAlignment = Enum.TextXAlignment.Left
+	label.TextYAlignment = Enum.TextYAlignment.Center
 	label.Parent = frame
 	
+	local toggle = Instance.new("TextButton")
+	toggle.Size = UDim2.new(0, 44, 0, 24)
+	toggle.Position = UDim2.new(1, -56, 0.5, -12)
+	toggle.BackgroundColor3 = self.config[key] and COLORS.primary or COLORS.border
+	toggle.Text = ""
 	toggle.Parent = frame
+	
+	local toggleCorner = Instance.new("UICorner")
+	toggleCorner.CornerRadius = UDim.new(1, 0)
+	toggleCorner.Parent = toggle
+	
+	local dot = Instance.new("Frame")
+	dot.Size = UDim2.new(0, 18, 0, 18)
+	dot.Position = self.config[key] and UDim2.new(1, -20, 0.5, -9) or UDim2.new(0, 3, 0.5, -9)
+	dot.BackgroundColor3 = COLORS.accent
+	dot.Parent = toggle
+	
+	local dotCorner = Instance.new("UICorner")
+	dotCorner.CornerRadius = UDim.new(1, 0)
+	dotCorner.Parent = dot
 	
 	toggle.MouseButton1Click:Connect(function()
 		self.config[key] = not self.config[key]
@@ -305,7 +302,7 @@ function Lumina:AddToggle(parent, text, key, callback)
 		}):Play()
 		
 		TweenService:Create(dot, TWEENS.fast, {
-			Position = self.config[key] and UDim2.new(1, -17, 0.5, -7) or UDim2.new(0, 3, 0.5, -7)
+			Position = self.config[key] and UDim2.new(1, -20, 0.5, -9) or UDim2.new(0, 3, 0.5, -9)
 		}):Play()
 		
 		if callback then
@@ -318,7 +315,7 @@ function Lumina:AddSlider(parent, text, minVal, maxVal, key, callback)
 	self.config[key] = self.config[key] or minVal
 	
 	local frame = Instance.new("Frame")
-	frame.Size = UDim2.new(1, -24, 0, 50)
+	frame.Size = UDim2.new(1, -30, 0, 70)
 	frame.BackgroundColor3 = COLORS.surface
 	frame.BorderSizePixel = 0
 	frame.Parent = parent
@@ -329,11 +326,12 @@ function Lumina:AddSlider(parent, text, minVal, maxVal, key, callback)
 	
 	local frameStroke = Instance.new("UIStroke")
 	frameStroke.Color = COLORS.border
+	frameStroke.Thickness = 1
 	frameStroke.Parent = frame
 	
 	local label = Instance.new("TextLabel")
-	label.Size = UDim2.new(0.6, 0, 0, 22)
-	label.Position = UDim2.new(0, 12, 0, 6)
+	label.Size = UDim2.new(1, -24, 0, 20)
+	label.Position = UDim2.new(0, 12, 0, 8)
 	label.BackgroundTransparency = 1
 	label.Text = text
 	label.Font = Enum.Font.GothamSemibold
@@ -343,8 +341,8 @@ function Lumina:AddSlider(parent, text, minVal, maxVal, key, callback)
 	label.Parent = frame
 	
 	local valueLabel = Instance.new("TextLabel")
-	valueLabel.Size = UDim2.new(0.3, 0, 0, 22)
-	valueLabel.Position = UDim2.new(1, -60, 0, 6)
+	valueLabel.Size = UDim2.new(0.3, 0, 0, 20)
+	valueLabel.Position = UDim2.new(1, -50, 0, 8)
 	valueLabel.BackgroundTransparency = 1
 	valueLabel.Text = tostring(self.config[key])
 	valueLabel.Font = Enum.Font.GothamMonospace
@@ -354,8 +352,8 @@ function Lumina:AddSlider(parent, text, minVal, maxVal, key, callback)
 	valueLabel.Parent = frame
 	
 	local sliderBar = Instance.new("Frame")
-	sliderBar.Size = UDim2.new(1, -24, 0, 5)
-	sliderBar.Position = UDim2.new(0, 12, 0, 32)
+	sliderBar.Size = UDim2.new(1, -24, 0, 6)
+	sliderBar.Position = UDim2.new(0, 12, 0, 36)
 	sliderBar.BackgroundColor3 = COLORS.border
 	sliderBar.BorderSizePixel = 0
 	sliderBar.Parent = frame
@@ -376,7 +374,7 @@ function Lumina:AddSlider(parent, text, minVal, maxVal, key, callback)
 	fillCorner.Parent = fill
 	
 	local button = Instance.new("TextButton")
-	button.Size = UDim2.new(0, 12, 0, 12)
+	button.Size = UDim2.new(0, 14, 0, 14)
 	button.AnchorPoint = Vector2.new(0.5, 0.5)
 	button.Position = UDim2.new(initPct, 0, 0.5, 0)
 	button.BackgroundColor3 = COLORS.accent
@@ -430,7 +428,7 @@ function Lumina:AddDropdown(parent, text, options, key, callback)
 	local isOpen = false
 	
 	local container = Instance.new("Frame")
-	container.Size = UDim2.new(1, -24, 0, 42)
+	container.Size = UDim2.new(1, -30, 0, 46)
 	container.BackgroundColor3 = COLORS.surface
 	container.BorderSizePixel = 0
 	container.ClipsDescendants = true
@@ -442,11 +440,49 @@ function Lumina:AddDropdown(parent, text, options, key, callback)
 	
 	local containerStroke = Instance.new("UIStroke")
 	containerStroke.Color = COLORS.border
+	containerStroke.Thickness = 1
 	containerStroke.Parent = container
 	
+	local header = Instance.new("Frame")
+	header.Size = UDim2.new(1, 0, 0, 46)
+	header.BackgroundTransparency = 1
+	header.Parent = container
+	
+	local headerLabel = Instance.new("TextLabel")
+	headerLabel.Size = UDim2.new(0.5, 0, 1, 0)
+	headerLabel.Position = UDim2.new(0, 12, 0, 0)
+	headerLabel.BackgroundTransparency = 1
+	headerLabel.Text = text
+	headerLabel.Font = Enum.Font.GothamSemibold
+	headerLabel.TextSize = 13
+	headerLabel.TextColor3 = COLORS.text_primary
+	headerLabel.TextXAlignment = Enum.TextXAlignment.Left
+	headerLabel.TextYAlignment = Enum.TextYAlignment.Center
+	headerLabel.Parent = header
+	
+	local triggerBtn = Instance.new("TextButton")
+	triggerBtn.Size = UDim2.new(0.4, -10, 0, 30)
+	triggerBtn.Position = UDim2.new(1, -10, 0.5, -15)
+	triggerBtn.AnchorPoint = Vector2.new(1, 0.5)
+	triggerBtn.BackgroundColor3 = COLORS.sidebar
+	triggerBtn.Text = "Select..."
+	triggerBtn.Font = Enum.Font.GothamSemibold
+	triggerBtn.TextSize = 11
+	triggerBtn.TextColor3 = COLORS.text_primary
+	triggerBtn.Parent = header
+	
+	local triggerCorner = Instance.new("UICorner")
+	triggerCorner.CornerRadius = UDim.new(0, 4)
+	triggerCorner.Parent = triggerBtn
+	
+	local triggerStroke = Instance.new("UIStroke")
+	triggerStroke.Color = COLORS.border
+	triggerStroke.Thickness = 1
+	triggerStroke.Parent = triggerBtn
+	
 	local dropdownContent = Instance.new("ScrollingFrame")
-	dropdownContent.Size = UDim2.new(1, -20, 0, 140)
-	dropdownContent.Position = UDim2.new(0, 10, 0, 46)
+	dropdownContent.Size = UDim2.new(1, -20, 0, 150)
+	dropdownContent.Position = UDim2.new(0, 10, 0, 50)
 	dropdownContent.BackgroundColor3 = COLORS.sidebar
 	dropdownContent.BorderSizePixel = 0
 	dropdownContent.ScrollBarThickness = 3
@@ -458,57 +494,24 @@ function Lumina:AddDropdown(parent, text, options, key, callback)
 	dropCorner.Parent = dropdownContent
 	
 	local layout = Instance.new("UIListLayout")
-	layout.Padding = UDim.new(0, 4)
+	layout.Padding = UDim.new(0, 5)
 	layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 	layout.SortOrder = Enum.SortOrder.LayoutOrder
 	layout.Parent = dropdownContent
 	
 	local layoutPadding = Instance.new("UIPadding")
-	layoutPadding.PaddingTop = UDim.new(0, 5)
+	layoutPadding.PaddingTop = UDim.new(0, 6)
+	layoutPadding.PaddingLeft = UDim.new(0, 6)
+	layoutPadding.PaddingRight = UDim.new(0, 6)
 	layoutPadding.Parent = dropdownContent
 	
 	layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-		dropdownContent.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
+		dropdownContent.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 12)
 	end)
-	
-	local header = Instance.new("Frame")
-	header.Size = UDim2.new(1, 0, 0, 42)
-	header.BackgroundTransparency = 1
-	header.Parent = container
-	
-	local headerLabel = Instance.new("TextLabel")
-	headerLabel.Size = UDim2.new(0.4, 0, 1, 0)
-	headerLabel.Position = UDim2.new(0, 12, 0, 0)
-	headerLabel.BackgroundTransparency = 1
-	headerLabel.Text = text
-	headerLabel.Font = Enum.Font.GothamSemibold
-	headerLabel.TextSize = 13
-	headerLabel.TextColor3 = COLORS.text_primary
-	headerLabel.TextXAlignment = Enum.TextXAlignment.Left
-	headerLabel.Parent = header
-	
-	local triggerBtn = Instance.new("TextButton")
-	triggerBtn.Size = UDim2.new(0.5, -5, 0, 28)
-	triggerBtn.Position = UDim2.new(1, -10, 0.5, 0)
-	triggerBtn.AnchorPoint = Vector2.new(1, 0.5)
-	triggerBtn.BackgroundColor3 = COLORS.sidebar
-	triggerBtn.Text = "Select..."
-	triggerBtn.Font = Enum.Font.GothamSemibold
-	triggerBtn.TextSize = 12
-	triggerBtn.TextColor3 = COLORS.text_primary
-	triggerBtn.Parent = header
-	
-	local triggerCorner = Instance.new("UICorner")
-	triggerCorner.CornerRadius = UDim.new(0, 4)
-	triggerCorner.Parent = triggerBtn
-	
-	local triggerStroke = Instance.new("UIStroke")
-	triggerStroke.Color = COLORS.border
-	triggerStroke.Parent = triggerBtn
 	
 	for _, option in ipairs(options) do
 		local optBtn = Instance.new("TextButton")
-		optBtn.Size = UDim2.new(1, -12, 0, 28)
+		optBtn.Size = UDim2.new(1, -12, 0, 30)
 		optBtn.BackgroundColor3 = self.config[key][option] and COLORS.primary or COLORS.surface
 		optBtn.BorderSizePixel = 0
 		optBtn.Text = option
@@ -540,7 +543,7 @@ function Lumina:AddDropdown(parent, text, options, key, callback)
 	triggerBtn.MouseButton1Click:Connect(function()
 		isOpen = not isOpen
 		TweenService:Create(container, TWEENS.fast, {
-			Size = isOpen and UDim2.new(1, -24, 0, 190) or UDim2.new(1, -24, 0, 42)
+			Size = isOpen and UDim2.new(1, -30, 0, 210) or UDim2.new(1, -30, 0, 46)
 		}):Play()
 	end)
 end
@@ -549,8 +552,8 @@ function Lumina:Notify(title, message, duration)
 	duration = duration or 4
 	
 	local notif = Instance.new("Frame")
-	notif.Size = UDim2.new(0, 300, 0, 90)
-	notif.Position = UDim2.new(1, 320, 1, -110)
+	notif.Size = UDim2.new(0, 320, 0, 100)
+	notif.Position = UDim2.new(1, 330, 1, -120)
 	notif.BackgroundColor3 = COLORS.background
 	notif.BorderSizePixel = 0
 	notif.Parent = self.gui
@@ -565,7 +568,7 @@ function Lumina:Notify(title, message, duration)
 	notifStroke.Parent = notif
 	
 	local notifHeader = Instance.new("Frame")
-	notifHeader.Size = UDim2.new(1, 0, 0, 32)
+	notifHeader.Size = UDim2.new(1, 0, 0, 35)
 	notifHeader.BackgroundColor3 = COLORS.surface
 	notifHeader.BorderSizePixel = 0
 	notifHeader.Parent = notif
@@ -583,11 +586,12 @@ function Lumina:Notify(title, message, duration)
 	titleLabel.TextSize = 13
 	titleLabel.TextColor3 = COLORS.text_primary
 	titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+	titleLabel.TextYAlignment = Enum.TextYAlignment.Center
 	titleLabel.Parent = notifHeader
 	
 	local messageLabel = Instance.new("TextLabel")
-	messageLabel.Size = UDim2.new(1, -24, 1, -40)
-	messageLabel.Position = UDim2.new(0, 12, 0, 36)
+	messageLabel.Size = UDim2.new(1, -24, 1, -43)
+	messageLabel.Position = UDim2.new(0, 12, 0, 37)
 	messageLabel.BackgroundTransparency = 1
 	messageLabel.Text = message
 	messageLabel.Font = Enum.Font.Gotham
@@ -598,10 +602,10 @@ function Lumina:Notify(title, message, duration)
 	messageLabel.TextYAlignment = Enum.TextYAlignment.Top
 	messageLabel.Parent = notif
 	
-	TweenService:Create(notif, TWEENS.smooth, {Position = UDim2.new(1, -310, 1, -110)}):Play()
+	TweenService:Create(notif, TWEENS.smooth, {Position = UDim2.new(1, -330, 1, -120)}):Play()
 	
 	task.delay(duration, function()
-		local tw = TweenService:Create(notif, TWEENS.fast, {Position = UDim2.new(1, 320, 1, -110)})
+		local tw = TweenService:Create(notif, TWEENS.fast, {Position = UDim2.new(1, 330, 1, -120)})
 		tw:Play()
 		tw.Completed:Connect(function()
 			notif:Destroy()
